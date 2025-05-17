@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
@@ -35,7 +35,10 @@ export function MainNav() {
               About
             </Link>
           </nav>
-          <SearchBar />
+          
+          <Suspense fallback={<div>Loading search bar...</div>}>
+            <SearchBar />
+          </Suspense>
         </div>
 
         {/* Desktop Auth Buttons */}
