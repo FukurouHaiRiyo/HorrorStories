@@ -27,7 +27,7 @@ if (typeof window !== "undefined") {
       }
 
       if (operator === "eq") {
-        return this.eq(column, value)
+        return this.eq(column, value);
       }
 
       return this
