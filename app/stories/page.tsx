@@ -5,6 +5,7 @@ import { MainNav } from "@/components/main-nav"
 import { StoryList } from "@/components/story-list"
 import { SearchBar } from "@/components/search-bar"
 import { useAuth } from "@/context/auth-context"
+import { Suspense } from "react"
 
 export default function StoriesPage() {
   const { error: authError } = useAuth()
@@ -16,7 +17,9 @@ export default function StoriesPage() {
         <div className="container px-4 py-8 md:px-6 md:py-12">
           <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h1 className="text-3xl font-bold">Browse Horror Stories</h1>
-            <SearchBar />
+            <Suspense fallback={<div>Loading search bar...</div>}>
+              <SearchBar />
+            </Suspense>
           </div>
 
           <StoryList />

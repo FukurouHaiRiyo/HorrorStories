@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
@@ -63,7 +63,9 @@ export default function SearchPage() {
           <div className="container px-4 py-8 md:px-6 md:py-12">
             <div className="mb-8 space-y-4">
               <h1 className="text-3xl font-bold">Search</h1>
-              <SearchBar />
+              <Suspense fallback={<div>Loading search bar...</div>}>
+                <SearchBar />
+              </Suspense>
               <p className="text-gray-400">Enter a search term to find horror stories.</p>
             </div>
           </div>
