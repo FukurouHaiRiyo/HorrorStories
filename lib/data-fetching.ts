@@ -1,4 +1,4 @@
-import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { getSupabaseBrowserClient, getServiceClient } from "@/lib/supabase"
 
 // Helper to extend Supabase query with conditional filters
 declare module "@supabase/supabase-js" {
@@ -9,27 +9,31 @@ declare module "@supabase/supabase-js" {
 
 // Add conditionalFilter method to PostgrestFilterBuilder prototype
 if (typeof window !== "undefined") {
-  const PostgrestFilterBuilder = Object.getPrototypeOf(
-    getSupabaseBrowserClient().from("stories").select("*"),
-  ).constructor
+  try {
+    const PostgrestFilterBuilder = Object.getPrototypeOf(
+      getSupabaseBrowserClient().from("stories").select("*"),
+    ).constructor
 
-  PostgrestFilterBuilder.prototype.conditionalFilter = function (column: string, value: any, operator = "eq") {
-    if (value === undefined || value === null) return this
+    PostgrestFilterBuilder.prototype.conditionalFilter = function (column: string, value: any, operator = "eq") {
+      if (value === undefined || value === null) return this
 
-    if (operator === "in" && Array.isArray(value)) {
-      if (value.length === 0) return this
-      return this.in(column, value)
+      if (operator === "in" && Array.isArray(value)) {
+        if (value.length === 0) return this
+        return this.in(column, value)
+      }
+
+      if (operator === "or") {
+        return this.or(value)
+      }
+
+      if (operator === "eq") {
+        return this.eq(column, value)
+      }
+
+      return this
     }
-
-    if (operator === "or") {
-      return this.or(value)
-    }
-
-    if (operator === "eq") {
-      return this.eq(column, value)
-    }
-
-    return this
+  } catch (error) {
+    console.error("Error setting up conditionalFilter:", error)
   }
 }
 
@@ -46,7 +50,16 @@ export async function fetchStories(
   const { page = 1, pageSize = 10, featured, categoryId, searchQuery } = options
 
   try {
-    const supabase = getSupabaseBrowserClient()
+    // Try with service client first for more reliable results
+    let supabase
+    try {
+      supabase = getServiceClient()
+      console.log("Using service client for fetchStories")
+    } catch (error) {
+      console.warn("Service client failed, falling back to browser client:", error)
+      supabase = getSupabaseBrowserClient()
+    }
+
     let storyIds: { story_id: string }[] = []
 
     // Handle category filtering first
@@ -127,9 +140,16 @@ export async function fetchStories(
 
     if (error) throw error
 
+    if (!data || data.length === 0) {
+      console.log("No stories found in fetchStories")
+      return { data: [], count: 0, error: null }
+    }
+
+    console.log(`Found ${data.length} stories, fetching additional data...`)
+
     // Fetch likes and comments counts for each story
     const storiesWithCounts = await Promise.all(
-      (data || []).map(async (story) => {
+      data.map(async (story) => {
         try {
           // Get likes count
           const { count: likesCount, error: likesError } = await supabase
@@ -166,7 +186,7 @@ export async function fetchStories(
 
     // Fetch author information separately to avoid circular dependencies
     const stories = await Promise.all(
-      (storiesWithCounts || []).map(async (story) => {
+      storiesWithCounts.map(async (story) => {
         // Only fetch author if we have an author_id
         if (story.author_id) {
           try {
@@ -196,9 +216,10 @@ export async function fetchStories(
       }),
     )
 
+    console.log(`Successfully processed ${stories.length} stories with counts and authors`)
     return { data: stories, count, error: null }
-  } catch (error) {
-    console.error("Error fetching stories:", error)
+  } catch (error: any) {
+    console.error("Error in fetchStories:", error)
     return { data: [], count: 0, error }
   }
 }

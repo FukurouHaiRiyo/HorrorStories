@@ -12,21 +12,29 @@ import { EnvChecker } from "@/components/env-checker"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
 import type { Story } from "@/types/supabase"
+import { Loader2 } from "lucide-react"
 
 export default function Home() {
-  const { error } = useAuth()
+  const { error: authError, isLoading: authLoading } = useAuth()
   const [featuredStory, setFeaturedStory] = useState<Story | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
+    // Wait for auth to be ready before fetching data
+    if (authLoading && retryCount === 0) {
+      return
+    }
+
     const loadFeaturedStory = async () => {
-      if (error) {
+      if (authError) {
         return
       }
 
       setIsLoading(true)
       try {
+        console.log(`Fetching featured story (attempt ${retryCount + 1})...`)
         const { data, error: storiesError } = await fetchStories({
           featured: true,
           pageSize: 1,
@@ -34,19 +42,38 @@ export default function Home() {
 
         if (storiesError) throw storiesError
 
+        if (!data || data.length === 0) {
+          // If no data and we haven't retried too many times, retry
+          if (retryCount < 2) {
+            console.log("No featured story found, retrying...")
+            setRetryCount(retryCount + 1)
+            return
+          }
+        }
+
         console.log("Featured story data:", data[0])
         setFeaturedStory(data[0] || null)
         setLoadError(null)
       } catch (err: any) {
         console.error("Error fetching featured story:", err.message)
         setLoadError(err.message)
+
+        // Retry on error if we haven't retried too many times
+        if (retryCount < 2) {
+          console.log("Error fetching featured story, retrying...")
+          setRetryCount(retryCount + 1)
+        }
       } finally {
         setIsLoading(false)
       }
     }
 
     loadFeaturedStory()
-  }, [error])
+  }, [authError, authLoading, retryCount])
+
+  const handleRetry = () => {
+    setRetryCount(retryCount + 1)
+  }
 
   // Fallback content for when we're loading or have errors
   const placeholderStory = {
@@ -64,10 +91,16 @@ export default function Home() {
       <MainNav />
       <main className="flex-1">
         <section className="container px-4 py-12 md:px-6 md:py-24">
+          {/* Show environment checker */}
+          <EnvChecker />
+
           {loadError && (
             <div className="mb-8 p-4 border border-red-800 bg-red-900/20 rounded-md">
               <h3 className="text-lg font-semibold text-red-500">Error loading content</h3>
               <p className="text-gray-300">{loadError}</p>
+              <Button onClick={handleRetry} className="mt-4 bg-red-600 hover:bg-red-700">
+                Retry
+              </Button>
             </div>
           )}
 
@@ -94,11 +127,21 @@ export default function Home() {
           </div>
         </section>
 
-        {(featuredStory || (!isLoading && !error)) && (
+        {isLoading ? (
           <section className="container px-4 py-12 md:px-6">
             <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
-            <FeaturedStory story={featuredStory || placeholderStory} />
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+              <span className="ml-2">Loading featured story...</span>
+            </div>
           </section>
+        ) : (
+          (featuredStory || (!isLoading && !authError)) && (
+            <section className="container px-4 py-12 md:px-6">
+              <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
+              <FeaturedStory story={featuredStory || placeholderStory} />
+            </section>
+          )
         )}
 
         <section className="container px-4 py-12 md:px-6">
