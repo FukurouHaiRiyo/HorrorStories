@@ -16,7 +16,6 @@ type AuthContextType = {
   session: Session | null
   isLoading: boolean
   isAuthReady: boolean
-  isAdmin: boolean
   signUp: (email: string, password: string, userData: any) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -314,21 +313,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, router])
 
   // Check if user is admin from profile or JWT
-  const isAdmin = React.useMemo(() => {
-    const profileIsAdmin = profile?.role === "admin"
-    const metadataIsAdmin = user?.app_metadata?.role === "admin"
+  // const isAdmin = React.useMemo(() => {
+  //   const profileIsAdmin = profile?.role === "admin"
+  //   const metadataIsAdmin = user?.app_metadata?.role === "admin"
 
-    console.log("Admin check:", {
-      profileRole: profile?.role,
-      metadataRole: user?.app_metadata?.role,
-      profileIsAdmin,
-      metadataIsAdmin,
-      userId: user?.id,
-      email: user?.email,
-    })
+  //   console.log("Admin check:", {
+  //     profileRole: profile?.role,
+  //     metadataRole: user?.app_metadata?.role,
+  //     profileIsAdmin,
+  //     metadataIsAdmin,
+  //     userId: user?.id,
+  //     email: user?.email,
+  //   })
 
-    return profileIsAdmin || metadataIsAdmin
-  }, [profile, user])
+  //   return profileIsAdmin || metadataIsAdmin
+  // }, [profile, user])
 
   // Add isAuthReady to the context value
   const contextValue = React.useMemo(
@@ -338,14 +337,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       isLoading,
       isAuthReady,
-      isAdmin,
+      // isAdmin,
       signUp,
       signIn,
       signOut,
       error,
       refreshProfile,
     }),
-    [user, profile, session, isLoading, isAuthReady, isAdmin, signUp, signIn, signOut, error, refreshProfile],
+    [user, profile, session, isLoading, isAuthReady, signUp, signIn, signOut, error, refreshProfile],
   )
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
