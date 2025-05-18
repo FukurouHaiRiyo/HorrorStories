@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { FeaturedStory } from "@/components/featured-story"
 import { StoryList } from "@/components/story-list"
 import { MainNav } from "@/components/main-nav"
+import { EnvChecker } from "@/components/env-checker"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
 import type { Story } from "@/types/supabase"
@@ -15,7 +16,7 @@ import { Loader2 } from "lucide-react"
 
 export default function Home() {
   // Update the useEffect to depend on isAuthReady instead of authLoading
-  const { error: authError, isAuthReady, session, user, profile } = useAuth()
+  const { error: authError, isAuthReady } = useAuth()
 
   const [featuredStory, setFeaturedStory] = useState<Story | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -55,8 +56,6 @@ export default function Home() {
         }
 
         console.log("Featured story data:", data?.[0] || "No featured story found")
-        console.log("SESSION", { session, user, profile, isAuthReady, isLoading });
-
         setFeaturedStory(data?.[0] || null)
         setLoadError(null)
       } catch (err: any) {
@@ -101,6 +100,9 @@ export default function Home() {
       <MainNav />
       <main className="flex-1">
         <section className="container px-4 py-12 md:px-6 md:py-24">
+          {/* Show environment checker */}
+          <EnvChecker />
+
           {loadError && (
             <div className="mb-8 p-4 border border-red-800 bg-red-900/20 rounded-md">
               <h3 className="text-lg font-semibold text-red-500">Error loading content</h3>
@@ -113,7 +115,7 @@ export default function Home() {
 
           <div className="flex flex-col items-center gap-4 text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl/none">
-              Welcome to <span className="text-red-500">Nightmare Fuel</span>
+              Welcome to <span className="text-red-500">NightmareNarrator</span>
             </h1>
             <p className="max-w-[700px] text-gray-400 md:text-xl">
               Dive into a world of terror and suspense with original horror stories that will keep you up at night.
@@ -126,7 +128,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="outline" className="border-gray-700 text-black hover:bg-gray-900">
+                <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-900">
                   Sign Up to Interact
                 </Button>
               </Link>
@@ -166,16 +168,16 @@ export default function Home() {
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <p className="text-center text-sm text-gray-500 md:text-left">
-            © {new Date().getFullYear()} Nightmare Fuel. All rights reserved.
+            © {new Date().getFullYear()} NightmareNarrator. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <Link href="/" className="text-sm text-gray-500 hover:text-white">
+            <Link href="/terms" className="text-sm text-gray-500 hover:text-white">
               Terms
             </Link>
-            <Link href="/" className="text-sm text-gray-500 hover:text-white">
+            <Link href="/privacy" className="text-sm text-gray-500 hover:text-white">
               Privacy
             </Link>
-            <Link href="/" className="text-sm text-gray-500 hover:text-white">
+            <Link href="/contact" className="text-sm text-gray-500 hover:text-white">
               Contact
             </Link>
           </div>

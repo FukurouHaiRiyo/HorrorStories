@@ -113,7 +113,7 @@ export default function CategoriesPage() {
           </p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-500 hover:text-white">
-              Terms.
+              Terms
             </Link>
             <Link href="/privacy" className="text-sm text-gray-500 hover:text-white">
               Privacy
