@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
@@ -43,7 +43,10 @@ export function MainNav() {
               About
             </Link>
           </nav>
-          <SearchBar />
+
+          <Suspense fallback={<div>Loading search bar...</div>}>
+            <SearchBar />
+          </Suspense>
         </div>
 
         {/* Desktop Auth Buttons */}
