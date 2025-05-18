@@ -16,7 +16,7 @@ interface StoryListProps {
 }
 
 export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: StoryListProps) {
-  const { isLoading: authLoading } = useAuth()
+  const { isAuthReady } = useAuth()
   const [stories, setStories] = useState<Story[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +26,7 @@ export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: S
 
   useEffect(() => {
     // Wait for auth to be ready before fetching data
-    if (authLoading && retryCount === 0) {
+    if (!isAuthReady) {
       return
     }
 
@@ -75,7 +75,7 @@ export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: S
     }
 
     loadStories()
-  }, [page, pageSize, featured, categoryId, searchQuery, authLoading, retryCount])
+  }, [page, pageSize, featured, categoryId, searchQuery, isAuthReady, retryCount])
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)

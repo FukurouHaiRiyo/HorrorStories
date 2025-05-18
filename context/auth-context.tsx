@@ -9,11 +9,13 @@ import type { Session, User } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import type { Profile } from "@/types/supabase"
 
+// Update the type definition to include isAuthReady
 type AuthContextType = {
   user: User | null
   profile: Profile | null
   session: Session | null
   isLoading: boolean
+  isAuthReady: boolean // Add this property
   isAdmin: boolean
   signUp: (email: string, password: string, userData: any) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
@@ -32,6 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [supabase, setSupabase] = useState<ReturnType<typeof getSupabaseBrowserClient> | null>(null)
   const router = useRouter()
+  // Add a new state to track when auth is actually ready (not just loading)
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
   // Initialize Supabase client
   useEffect(() => {
@@ -101,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     console.log("Setting up auth state listener")
 
+    // Update the fetchSession function to set isAuthReady when complete
     const fetchSession = async () => {
       try {
         console.log("Fetching initial session")
@@ -130,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(err.message)
       } finally {
         setIsLoading(false)
+        setIsAuthReady(true) // Mark auth as ready regardless of success/failure
       }
     }
 
@@ -261,6 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return profileIsAdmin || metadataIsAdmin
   }, [profile, user])
 
+  // Add isAuthReady to the context value
   return (
     <AuthContext.Provider
       value={{
@@ -268,6 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         session,
         isLoading,
+        isAuthReady, // Add this to the context
         isAdmin,
         signUp,
         signIn,

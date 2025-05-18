@@ -1,4 +1,4 @@
-import { getSupabaseBrowserClient, getServiceClient } from "@/lib/supabase"
+import { getSupabaseBrowserClient } from "@/lib/supabase"
 
 // Helper to extend Supabase query with conditional filters
 declare module "@supabase/supabase-js" {
@@ -27,7 +27,7 @@ if (typeof window !== "undefined") {
       }
 
       if (operator === "eq") {
-        return this.eq(column, value);
+        return this.eq(column, value)
       }
 
       return this
@@ -37,7 +37,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-// Fetch stories with proper error handling and no circular dependencies
+// Add a retry mechanism to the fetchStories function
 export async function fetchStories(
   options: {
     page?: number
@@ -46,19 +46,14 @@ export async function fetchStories(
     categoryId?: string
     searchQuery?: string
   } = {},
+  retryCount = 0,
 ) {
   const { page = 1, pageSize = 10, featured, categoryId, searchQuery } = options
 
   try {
-    // Try with service client first for more reliable results
-    let supabase
-    try {
-      supabase = getServiceClient()
-      console.log("Using service client for fetchStories")
-    } catch (error) {
-      console.warn("Service client failed, falling back to browser client:", error)
-      supabase = getSupabaseBrowserClient()
-    }
+    // Use browser client to respect RLS policies
+    const supabase = getSupabaseBrowserClient()
+    console.log("Using browser client for fetchStories to respect RLS")
 
     let storyIds: { story_id: string }[] = []
 
@@ -103,7 +98,14 @@ export async function fetchStories(
     // Get the count
     const { count, error: countError } = await countQuery
 
-    if (countError) throw countError
+    if (countError) {
+      console.error("Count error:", countError)
+      if (retryCount < 2) {
+        console.log(`Retrying fetchStories (${retryCount + 1})...`)
+        return fetchStories(options, retryCount + 1)
+      }
+      throw countError
+    }
 
     // Build the query for fetching data
     let dataQuery = supabase
@@ -138,7 +140,14 @@ export async function fetchStories(
     // Execute the query with pagination
     const { data, error } = await dataQuery.order("created_at", { ascending: false }).range(from, to)
 
-    if (error) throw error
+    if (error) {
+      console.error("Data error:", error)
+      if (retryCount < 2) {
+        console.log(`Retrying fetchStories (${retryCount + 1})...`)
+        return fetchStories(options, retryCount + 1)
+      }
+      throw error
+    }
 
     if (!data || data.length === 0) {
       console.log("No stories found in fetchStories")
@@ -228,6 +237,7 @@ export async function fetchStories(
 export async function fetchStory(storyId: string) {
   try {
     const supabase = getSupabaseBrowserClient()
+    console.log("Using browser client for fetchStory to respect RLS")
 
     // Fetch the story
     const { data: story, error } = await supabase.from("stories").select("*").eq("id", storyId).single()
@@ -238,6 +248,15 @@ export async function fetchStory(storyId: string) {
 
     if (!story) {
       return { data: null, error: new Error("Story not found") }
+    }
+
+    // Increment view count using the RPC function
+    try {
+      await supabase.rpc("increment_view_count", { story_id: storyId })
+      console.log("View count incremented successfully")
+    } catch (viewCountError) {
+      console.error("Error incrementing view count:", viewCountError)
+      // Continue even if this fails
     }
 
     // Fetch author separately

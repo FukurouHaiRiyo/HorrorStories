@@ -9,7 +9,6 @@ import { Suspense } from "react"
 
 export default function StoriesPage() {
   const { error: authError } = useAuth()
-
   return (
     <div className="flex min-h-screen flex-col bg-black text-white">
       <MainNav />
@@ -28,7 +27,7 @@ export default function StoriesPage() {
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <p className="text-center text-sm text-gray-500 md:text-left">
-            © {new Date().getFullYear()} NightmareNarrator. All rights reserved.
+            © {new Date().getFullYear()} Nightmare Fuel. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-500 hover:text-white">

@@ -15,7 +15,7 @@ import type { Story } from "@/types/supabase"
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, profile, isAdmin, isLoading: authLoading } = useAuth()
+  const { user, profile, isAdmin, isLoading: authLoading, isAuthReady } = useAuth()
   const { toast } = useToast()
   const [stories, setStories] = useState<Story[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -27,10 +27,15 @@ export default function AdminPage() {
     setDebugInfo(`User: ${user?.email || "none"}, 
                  Profile: ${profile ? JSON.stringify(profile) : "none"}, 
                  isAdmin: ${isAdmin}, 
-                 authLoading: ${authLoading}`)
+                 authLoading: ${authLoading},
+                 isAuthReady: ${isAuthReady}`)
 
     // Check if user is admin
-    if (!authLoading && !isAdmin) {
+    if (!isAuthReady) {
+      return // Wait for auth to be fully ready
+    }
+
+    if (!isAdmin) {
       toast({
         title: "Access denied",
         description: "You don't have permission to access the admin area.",
@@ -44,6 +49,7 @@ export default function AdminPage() {
       if (!user) return
 
       try {
+        // Use browser client with proper authentication
         const { data, error } = await supabase
           .from("stories")
           .select(`
@@ -101,7 +107,7 @@ export default function AdminPage() {
     } else {
       setIsLoading(false)
     }
-  }, [user, isAdmin, authLoading, router, toast, supabase, profile])
+  }, [user, isAdmin, isAuthReady, router, toast, supabase, profile])
 
   const handleDeleteStory = async (id: string) => {
     try {

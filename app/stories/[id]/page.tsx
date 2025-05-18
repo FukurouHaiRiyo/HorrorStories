@@ -5,14 +5,14 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { MessageSquare, Share2, ThumbsDown, ThumbsUp, Loader2 } from "lucide-react"
+import { MessageSquare, Share2, ThumbsDown, ThumbsUp, Loader2, RefreshCw } from "lucide-react"
 import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/components/ui/use-toast"
-import { getSupabaseBrowserClient, getServiceClient } from "@/lib/supabase"
+import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { useAuth } from "@/context/auth-context"
 import { MainNav } from "@/components/main-nav"
 import type { Story, Comment, Profile, Category } from "@/types/supabase"
@@ -31,6 +31,7 @@ export default function StoryPage() {
   const [commentText, setCommentText] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
@@ -39,14 +40,15 @@ export default function StoryPage() {
 
       setIsLoading(true)
       try {
-        // Use service client to bypass RLS issues
-        const serviceClient = getServiceClient()
+        console.log(`Fetching story (attempt ${retryCount + 1})...`)
 
+        // Use browser client to respect RLS policies
         // 1. Fetch the story
-        const { data: storyData, error: storyError } = await serviceClient
+        const { data: storyData, error: storyError } = await supabase
           .from("stories")
           .select("*")
           .eq("id", storyId)
+          .eq("published", true) // Only fetch published stories
           .single()
 
         if (storyError) throw storyError
@@ -54,9 +56,9 @@ export default function StoryPage() {
         // 2. Fetch author separately
         let authorData = null
         if (storyData.author_id) {
-          const { data: profileData, error: profileError } = await serviceClient
+          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
-            .select("id, username, full_name, avatar_url, bio, role, created_at, updated_at")
+            .select("id, username, full_name, avatar_url")
             .eq("id", storyData.author_id)
             .single()
 
@@ -66,7 +68,7 @@ export default function StoryPage() {
         }
 
         // 3. Fetch categories
-        const { data: categoryLinks, error: categoryLinksError } = await serviceClient
+        const { data: categoryLinks, error: categoryLinksError } = await supabase
           .from("story_categories")
           .select("category_id")
           .eq("story_id", storyId)
@@ -76,7 +78,7 @@ export default function StoryPage() {
         let categoriesData: Category[] = []
         if (categoryLinks && categoryLinks.length > 0) {
           const categoryIds = categoryLinks.map((link) => link.category_id)
-          const { data: fetchedCategories, error: categoriesError } = await serviceClient
+          const { data: fetchedCategories, error: categoriesError } = await supabase
             .from("categories")
             .select("*")
             .in("id", categoryIds)
@@ -87,7 +89,7 @@ export default function StoryPage() {
         }
 
         // 4. Fetch comments
-        const { data: commentsData, error: commentsError } = await serviceClient
+        const { data: commentsData, error: commentsError } = await supabase
           .from("comments")
           .select("*")
           .eq("story_id", storyId)
@@ -100,7 +102,7 @@ export default function StoryPage() {
           (commentsData || []).map(async (comment) => {
             if (comment.user_id) {
               try {
-                const { data: userData, error: userError } = await serviceClient
+                const { data: userData, error: userError } = await supabase
                   .from("profiles")
                   .select("id, username, full_name, avatar_url")
                   .eq("id", comment.user_id)
@@ -125,7 +127,7 @@ export default function StoryPage() {
         )
 
         // 6. Get likes count
-        const { count: likesCount, error: likesError } = await serviceClient
+        const { count: likesCount, error: likesError } = await supabase
           .from("likes")
           .select("*", { count: "exact", head: true })
           .eq("story_id", storyId)
@@ -147,11 +149,14 @@ export default function StoryPage() {
           }
         }
 
-        // 8. Increment view count
-        await serviceClient
-          .from("stories")
-          .update({ view_count: (storyData.view_count || 0) + 1 })
-          .eq("id", storyId)
+        // 8. Increment view count using RPC function that respects RLS
+        // This assumes you have a function set up in Supabase
+        try {
+          await supabase.rpc("increment_view_count", { story_id: storyId })
+        } catch (viewCountError) {
+          console.error("Error incrementing view count:", viewCountError)
+          // Continue even if this fails
+        }
 
         // Set all the state
         setStory(storyData)
@@ -160,6 +165,15 @@ export default function StoryPage() {
         setComments(commentsWithUsers)
         setLikeCount(likesCount || 0)
       } catch (error: any) {
+        console.error("Error loading story:", error)
+
+        // Retry on error if we haven't retried too many times
+        if (retryCount < 2) {
+          console.log("Error loading story, retrying...")
+          setRetryCount(retryCount + 1)
+          return
+        }
+
         toast({
           title: "Error loading story",
           description: error.message,
@@ -171,7 +185,7 @@ export default function StoryPage() {
     }
 
     fetchStory()
-  }, [storyId, user, toast, supabase])
+  }, [storyId, user, toast, supabase, retryCount])
 
   const handleLike = async (value: number) => {
     if (!user) {
@@ -314,6 +328,10 @@ export default function StoryPage() {
     }
   }
 
+  const handleRetry = () => {
+    setRetryCount(retryCount + 1)
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-black text-white">
@@ -333,9 +351,17 @@ export default function StoryPage() {
         <div className="container mx-auto max-w-4xl px-4 py-12 text-center md:px-6">
           <h1 className="text-3xl font-bold">Story Not Found</h1>
           <p className="mt-4 text-gray-400">The story you're looking for doesn't exist or has been removed.</p>
-          <Link href="/stories">
-            <Button className="mt-6 bg-red-600 text-white hover:bg-red-700">Browse Stories</Button>
-          </Link>
+          <div className="mt-6 flex flex-col gap-4 items-center">
+            <Button onClick={handleRetry} className="bg-red-600 text-white hover:bg-red-700">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try Again
+            </Button>
+            <Link href="/stories">
+              <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-900">
+                Browse Stories
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     )
