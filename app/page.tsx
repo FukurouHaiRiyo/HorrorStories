@@ -15,7 +15,7 @@ import { Loader2 } from "lucide-react"
 
 export default function Home() {
   // Update the useEffect to depend on isAuthReady instead of authLoading
-  const { error: authError, isAuthReady } = useAuth()
+  const { error: authError, isAuthReady, session, user, profile } = useAuth()
 
   const [featuredStory, setFeaturedStory] = useState<Story | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -55,6 +55,8 @@ export default function Home() {
         }
 
         console.log("Featured story data:", data?.[0] || "No featured story found")
+        console.log("SESSION", { session, user, profile, isAuthReady, isLoading });
+
         setFeaturedStory(data?.[0] || null)
         setLoadError(null)
       } catch (err: any) {
