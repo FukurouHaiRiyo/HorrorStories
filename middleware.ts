@@ -4,10 +4,7 @@ import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(request: NextRequest) {
   try {
-    // Create a response object
-    const response = NextResponse.next()
-
-    // Create a Supabase client using cookies
+    // Create Supabase client using request cookies
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -17,59 +14,76 @@ export async function middleware(request: NextRequest) {
             return request.cookies.get(name)?.value
           },
           set(name, value, options) {
-            response.cookies.set({ name, value, ...options })
+            // We'll set cookies later using response object when needed
           },
           remove(name, options) {
-            response.cookies.set({ name, value: "", ...options })
+            // Same here
           },
         },
       },
     )
 
-    // Get the session
+    // Get current session
     const {
       data: { session },
     } = await supabase.auth.getSession()
 
-    // Check if the user is authenticated
+    const pathname = request.nextUrl.pathname
+    const fullPath = request.nextUrl.href
+
+    // If user is not logged in and accessing protected route
     if (!session) {
-      // If the user is trying to access a protected route, redirect to login
-      if (request.nextUrl.pathname.startsWith("/admin")) {
+      if (pathname.startsWith("/admin")) {
         const redirectUrl = new URL("/login", request.url)
-        redirectUrl.searchParams.set("redirect", request.nextUrl.pathname)
+        redirectUrl.searchParams.set("redirect", encodeURIComponent(fullPath))
         return NextResponse.redirect(redirectUrl)
       }
-    } else {
-      // If the user is authenticated and trying to access admin routes, check if they're an admin
-      if (request.nextUrl.pathname.startsWith("/admin")) {
-        // First check if the role is in the JWT
-        const role = session.user?.app_metadata?.role
-
-        if (role === "admin") {
-          // User is an admin, allow access
-          return response
-        }
-
-        // If not in JWT, check the profiles table
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
-
-        // If the user is not an admin, redirect to home
-        if (!profile || profile.role !== "admin") {
-          return NextResponse.redirect(new URL("/", request.url))
-        }
-      }
+      return NextResponse.next()
     }
 
-    return response
+    // Authenticated, check for admin routes
+    if (pathname.startsWith("/admin")) {
+      // First check role in JWT
+      const role = session.user?.app_metadata?.role
+
+      if (role === "admin") {
+        const response = NextResponse.next()
+        return response
+      }
+
+      // If not in JWT, check in 'profiles' table
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single()
+
+      if (error) {
+        console.error("Failed to fetch user role from DB:", error)
+        return NextResponse.redirect(new URL("/", request.url))
+      }
+
+      if (!profile || profile.role !== "admin") {
+        console.warn(
+          `Access denied: User ${session.user.id} attempted to access ${pathname} without admin role.`,
+        )
+        return NextResponse.redirect(new URL("/", request.url))
+      }
+
+      // Passed admin check
+      const response = NextResponse.next()
+      return response
+    }
+
+    // For all other authenticated access
+    return NextResponse.next()
   } catch (error) {
     console.error("Middleware error:", error)
-    // In case of error, allow the request to proceed
-    // The client-side auth checks will handle authentication
     return NextResponse.next()
   }
 }
 
-// Only run the middleware on these paths
+// Apply middleware only to admin routes
 export const config = {
   matcher: ["/admin/:path*"],
 }
