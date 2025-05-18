@@ -125,7 +125,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="outline" className="border-gray-700 text-black hover:bg-gray-600">
+                <Button variant="outline" className="bg-white border-gray-700 text-black hover:bg-gray-600">
                   Sign Up to Interact
                 </Button>
               </Link>
