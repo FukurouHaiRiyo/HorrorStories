@@ -56,7 +56,23 @@ export default function Home() {
         }
 
         console.log("Featured story data:", data?.[0] || "No featured story found")
-        setFeaturedStory(data?.[0] || null)
+        if (data && data[0]) {
+          // Ensure author is undefined or a fully-typed object (not null)
+          const story = {
+            ...data[0],
+            author: data[0].author
+              ? {
+                  id: data[0].author.id ?? "",
+                  username: data[0].author.username ?? null,
+                  full_name: data[0].author.full_name ?? null,
+                  avatar_url: data[0].author.avatar_url ?? null,
+                }
+              : undefined,
+          }
+          setFeaturedStory(story)
+        } else {
+          setFeaturedStory(null)
+        }
         setLoadError(null)
       } catch (err: any) {
         console.error("Error fetching featured story:", err.message)
