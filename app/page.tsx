@@ -66,6 +66,10 @@ export default function Home() {
                   username: data[0].author.username ?? null,
                   full_name: data[0].author.full_name ?? null,
                   avatar_url: data[0].author.avatar_url ?? null,
+                  bio: data[0].author.bio ?? null,
+                  role: data[0].author.role ?? "",
+                  created_at: data[0].author.created_at ?? "",
+                  updated_at: data[0].author.updated_at ?? "",
                 }
               : undefined,
           }
