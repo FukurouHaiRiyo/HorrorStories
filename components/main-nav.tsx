@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
@@ -24,7 +24,7 @@ export function MainNav() {
     <header className="border-b border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-red-500">
-          <span>Nightmare Fuel</span>
+          <span>NightmareNarrator</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -43,10 +43,7 @@ export function MainNav() {
               About
             </Link>
           </nav>
-
-          <Suspense fallback={<div>Loading search bar...</div>}>
-            <SearchBar />
-          </Suspense>
+          <SearchBar />
         </div>
 
         {/* Desktop Auth Buttons */}

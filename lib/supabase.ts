@@ -24,8 +24,15 @@ const createBrowserClient = () => {
 
 // For server components - using service role to bypass RLS
 export const createServerClient = () => {
+  // This should only be used in server components or server actions
+  if (typeof window !== "undefined") {
+    console.error("createServerClient should not be called from client-side code")
+    // Return a browser client instead for safety
+    return createBrowserClient()
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error(
@@ -50,42 +57,15 @@ export const getSupabaseBrowserClient = () => {
   return browserClient!
 }
 
-// Create a service client that bypasses RLS for client components
-// This should be used ONLY for read operations where RLS is causing issues
-let serviceClient: ReturnType<typeof createServerClient> | null = null
-
+// IMPORTANT: This function has been removed for security reasons
+// DO NOT use service role key in client-side code
 export const getServiceClient = () => {
-  // For client-side code, we need to be careful with service role keys
-  // Only use this for read operations that need to bypass RLS
+  // For client-side code, always return the browser client
   if (typeof window !== "undefined") {
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-
-      console.log("Service client env vars available:", {
-        hasUrl: !!supabaseUrl,
-        hasKey: !!supabaseServiceKey,
-      })
-
-      if (!supabaseUrl || !supabaseServiceKey) {
-        console.warn("Missing environment variables for service client, falling back to browser client")
-        return getSupabaseBrowserClient()
-      }
-
-      if (!serviceClient) {
-        serviceClient = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-          auth: {
-            persistSession: false,
-          },
-        })
-      }
-      return serviceClient
-    } catch (error) {
-      console.error("Failed to create service client:", error)
-      return getSupabaseBrowserClient()
-    }
-  } else {
-    // For server-side code, use createServerClient
-    return createServerClient()
+    console.warn("getServiceClient called from client-side code - returning browser client instead")
+    return getSupabaseBrowserClient()
   }
+
+  // For server-side code, use createServerClient
+  return createServerClient()
 }

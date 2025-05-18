@@ -326,13 +326,7 @@ export default function EditStoryPage() {
                 type="button"
                 variant="outline"
                 className="border-gray-700 text-white hover:bg-gray-800"
-                onClick={() => {
-                  // Create a dummy event object to satisfy handleSubmit's type
-                  const fakeEvent = {
-                    preventDefault: () => {},
-                  } as React.FormEvent<HTMLFormElement>;
-                  handleSubmit(fakeEvent, true);
-                }}
+                onClick={(e) => handleSubmit(e, true)}
                 disabled={isSaving}
               >
                 {isSaving ? "Saving..." : "Save as Draft"}

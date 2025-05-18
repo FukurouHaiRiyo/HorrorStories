@@ -34,14 +34,14 @@ export async function middleware(request: NextRequest) {
     // Check if the user is authenticated
     if (!session) {
       // If the user is trying to access a protected route, redirect to login
-      if (request.nextUrl.pathname.startsWith("/Admin")) {
+      if (request.nextUrl.pathname.startsWith("/admin")) {
         const redirectUrl = new URL("/login", request.url)
         redirectUrl.searchParams.set("redirect", request.nextUrl.pathname)
         return NextResponse.redirect(redirectUrl)
       }
     } else {
       // If the user is authenticated and trying to access admin routes, check if they're an admin
-      if (request.nextUrl.pathname.startsWith("/Admin")) {
+      if (request.nextUrl.pathname.startsWith("/admin")) {
         // First check if the role is in the JWT
         const role = session.user?.app_metadata?.role
 
@@ -71,5 +71,5 @@ export async function middleware(request: NextRequest) {
 
 // Only run the middleware on these paths
 export const config = {
-  matcher: ["/Admin/:path*"],
+  matcher: ["/admin/:path*"],
 }

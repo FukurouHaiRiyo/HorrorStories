@@ -70,7 +70,7 @@ export default function ClientLayout({
       <AuthProvider>
         {mounted ? <AppContent>{children}</AppContent> : <div style={{ visibility: "hidden" }}>{children}</div>}
         <Toaster />
-        {/* <AuthDebugIndicator /> */}
+        <AuthDebugIndicator />
       </AuthProvider>
     </ThemeProvider>
   )

@@ -7,8 +7,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Nightmare Fuel - Horror Stories",
+  title: "NightmareNarrator - Horror Stories",
   description: "A platform for sharing and reading terrifying horror stories",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -17,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark">
       <body className={inter.className}>
         <ClientLayout>{children}</ClientLayout>
       </body>

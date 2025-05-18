@@ -11,13 +11,11 @@ import { MainNav } from "@/components/main-nav"
 import { EnvChecker } from "@/components/env-checker"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
+import { TrendingStories } from "@/components/trending-stories"
 import type { Story } from "@/types/supabase"
-import { Loader2 } from "lucide-react"
 
-export default function Home() {
-  // Update the useEffect to depend on isAuthReady instead of authLoading
-  const { error: authError, isAuthReady } = useAuth()
-
+export default function HomeWithTrending() {
+  const { error: authError, isLoading: authLoading } = useAuth()
   const [featuredStory, setFeaturedStory] = useState<Story | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -25,14 +23,12 @@ export default function Home() {
 
   useEffect(() => {
     // Wait for auth to be ready before fetching data
-    if (!isAuthReady) {
-      console.log("Auth not ready yet, waiting to fetch featured story...")
+    if (authLoading && retryCount === 0) {
       return
     }
 
     const loadFeaturedStory = async () => {
       if (authError) {
-        console.error("Auth error, skipping featured story fetch:", authError)
         return
       }
 
@@ -55,8 +51,8 @@ export default function Home() {
           }
         }
 
-        console.log("Featured story data:", data?.[0] || "No featured story found")
-        setFeaturedStory(data?.[0] || null)
+        console.log("Featured story data:", data[0])
+        setFeaturedStory(data[0] || null)
         setLoadError(null)
       } catch (err: any) {
         console.error("Error fetching featured story:", err.message)
@@ -72,28 +68,12 @@ export default function Home() {
       }
     }
 
-    // Add a small delay to ensure auth state is fully processed
-    const timer = setTimeout(() => {
-      loadFeaturedStory()
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [authError, isAuthReady, retryCount])
+    loadFeaturedStory()
+  }, [authError, authLoading, retryCount])
 
   const handleRetry = () => {
     setRetryCount(retryCount + 1)
   }
-
-  // Fallback content for when we're loading or have errors
-  const placeholderStory = {
-    id: "placeholder",
-    title: "The Whispers in the Walls",
-    excerpt: "I've been hearing them for weeks now. The whispers. They're getting louder every night...",
-    created_at: new Date().toISOString(),
-    image_url: "/placeholder.svg?height=400&width=800",
-    likes_count: 124,
-    comments_count: 45,
-  } as Story
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-white">
@@ -136,34 +116,32 @@ export default function Home() {
           </div>
         </section>
 
-        {isLoading ? (
-          <section className="container px-4 py-12 md:px-6">
-            <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-              <span className="ml-2">Loading featured story...</span>
-            </div>
-          </section>
-        ) : (
-          (featuredStory || (!isLoading && !authError)) && (
-            <section className="container px-4 py-12 md:px-6">
-              <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
-              <FeaturedStory story={featuredStory || placeholderStory} />
-            </section>
-          )
-        )}
+        <div className="container px-4 py-8 md:px-6">
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              {featuredStory && (
+                <section className="mb-12">
+                  <h2 className="mb-6 text-3xl font-bold tracking-tighter">Featured Story</h2>
+                  <FeaturedStory story={featuredStory} />
+                </section>
+              )}
 
-        <section className="container px-4 py-12 md:px-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tighter">Recent Stories</h2>
-            <Link href="/stories" className="text-red-500 hover:underline">
-              View All
-            </Link>
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold tracking-tighter">Recent Stories</h2>
+                  <Link href="/stories" className="text-red-500 hover:underline">
+                    View All
+                  </Link>
+                </div>
+                <StoryList pageSize={4} />
+              </section>
+            </div>
+
+            <aside>
+              <TrendingStories limit={5} days={7} />
+            </aside>
           </div>
-          <div className="mt-8">
-            <StoryList pageSize={4} />
-          </div>
-        </section>
+        </div>
       </main>
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
