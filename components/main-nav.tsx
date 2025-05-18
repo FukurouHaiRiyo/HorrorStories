@@ -40,7 +40,7 @@ export function MainNav() {
               Categories
             </Link>
             <Link href="/about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
-              About
+              About.
             </Link>
           </nav>
           <Suspense fallback={<div>Loading search bar...</div>}>
