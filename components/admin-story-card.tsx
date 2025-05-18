@@ -55,13 +55,13 @@ export function AdminStoryCard({ story, onDelete }: AdminStoryCardProps) {
         </div>
         <div className="flex gap-2">
           <Link href={`/stories/${story.id}`}>
-            <Button variant="outline" size="sm" className="h-8 border-gray-700 text-white hover:bg-gray-800">
+            <Button variant="outline" size="sm" className="h-8 border-gray-700 text-black hover:bg-gray-600">
               <Eye className="mr-1 h-3 w-3" />
               View
             </Button>
           </Link>
           <Link href={`/admin/stories/edit/${story.id}`}>
-            <Button variant="outline" size="sm" className="h-8 border-gray-700 text-white hover:bg-gray-800">
+            <Button variant="outline" size="sm" className="h-8 border-gray-700 text-black hover:bg-gray-600">
               <Edit className="mr-1 h-3 w-3" />
               Edit
             </Button>

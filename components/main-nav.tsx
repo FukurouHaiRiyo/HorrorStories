@@ -1,22 +1,30 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
-import { Suspense, useState } from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
 import { SearchBar } from "@/components/search-bar"
 
 export function MainNav() {
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, signOut, isAdmin, refreshProfile } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Refresh profile when component mounts to ensure we have the latest data
+  useEffect(() => {
+    if (user && !profile) {
+      refreshProfile()
+    }
+  }, [user, profile, refreshProfile])
 
   return (
     <header className="border-b border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-red-500">
-          <span>NightmareNarrator</span>
+          <span>Nightmare Fuel</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -35,10 +43,7 @@ export function MainNav() {
               About
             </Link>
           </nav>
-          
-          <Suspense fallback={<div>Loading search bar...</div>}>
-            <SearchBar />
-          </Suspense>
+          <SearchBar />
         </div>
 
         {/* Desktop Auth Buttons */}

@@ -12,7 +12,14 @@ const createBrowserClient = () => {
     )
   }
 
-  return createClient<Database>(supabaseUrl, supabaseAnonKey)
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true, // Ensure sessions are persisted
+      storageKey: "supabase_auth_token", // Specify the storage key
+      storage: typeof window !== "undefined" ? localStorage : undefined, // Use localStorage when available
+      autoRefreshToken: true, // Auto refresh the token
+    },
+  })
 }
 
 // For server components - using service role to bypass RLS
@@ -37,10 +44,10 @@ export const createServerClient = () => {
 let browserClient: ReturnType<typeof createBrowserClient> | null = null
 
 export const getSupabaseBrowserClient = () => {
-  if (!browserClient) {
+  if (!browserClient && typeof window !== "undefined") {
     browserClient = createBrowserClient()
   }
-  return browserClient
+  return browserClient!
 }
 
 // Create a service client that bypasses RLS for client components

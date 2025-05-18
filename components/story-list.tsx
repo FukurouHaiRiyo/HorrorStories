@@ -27,6 +27,7 @@ export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: S
   useEffect(() => {
     // Wait for auth to be ready before fetching data
     if (!isAuthReady) {
+      console.log("Auth not ready yet, waiting to fetch stories...")
       return
     }
 
@@ -56,8 +57,8 @@ export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: S
           }
         }
 
-        console.log(`Loaded ${data.length} stories with counts:`, data)
-        setStories(data)
+        console.log(`Loaded ${data?.length || 0} stories`)
+        setStories(data || [])
         setTotalPages(Math.ceil((count || 0) / pageSize))
         setError(null)
       } catch (err: any) {
@@ -74,7 +75,12 @@ export function StoryList({ featured, categoryId, searchQuery, pageSize = 9 }: S
       }
     }
 
-    loadStories()
+    // Add a small delay to ensure auth state is fully processed
+    const timer = setTimeout(() => {
+      loadStories()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [page, pageSize, featured, categoryId, searchQuery, isAuthReady, retryCount])
 
   const handlePageChange = (newPage: number) => {

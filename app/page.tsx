@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { FeaturedStory } from "@/components/featured-story"
 import { StoryList } from "@/components/story-list"
 import { MainNav } from "@/components/main-nav"
+import { EnvChecker } from "@/components/env-checker"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
 import type { Story } from "@/types/supabase"
@@ -25,11 +26,13 @@ export default function Home() {
   useEffect(() => {
     // Wait for auth to be ready before fetching data
     if (!isAuthReady) {
+      console.log("Auth not ready yet, waiting to fetch featured story...")
       return
     }
 
     const loadFeaturedStory = async () => {
       if (authError) {
+        console.error("Auth error, skipping featured story fetch:", authError)
         return
       }
 
@@ -52,8 +55,8 @@ export default function Home() {
           }
         }
 
-        console.log("Featured story data:", data[0])
-        setFeaturedStory(data[0] || null)
+        console.log("Featured story data:", data?.[0] || "No featured story found")
+        setFeaturedStory(data?.[0] || null)
         setLoadError(null)
       } catch (err: any) {
         console.error("Error fetching featured story:", err.message)
@@ -69,7 +72,12 @@ export default function Home() {
       }
     }
 
-    loadFeaturedStory()
+    // Add a small delay to ensure auth state is fully processed
+    const timer = setTimeout(() => {
+      loadFeaturedStory()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [authError, isAuthReady, retryCount])
 
   const handleRetry = () => {
@@ -157,7 +165,7 @@ export default function Home() {
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <p className="text-center text-sm text-gray-500 md:text-left">
-            © {new Date().getFullYear()} Nightmare Fuel. All rights reserved.
+            © {new Date().getFullYear()} NightmareNarrator. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-500 hover:text-white">
