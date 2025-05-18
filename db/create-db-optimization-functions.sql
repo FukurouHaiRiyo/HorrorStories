@@ -1,71 +1,73 @@
--- Function to run VACUUM
-CREATE OR REPLACE FUNCTION run_vacuum()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- VACUUM can't be executed directly in a function
-  -- This is a placeholder. In reality, you would need to use pg_catalog.pg_stat_statements
-  -- or have a separate process that runs VACUUM
-  RAISE NOTICE 'VACUUM operation would be executed here';
-END;
-$$;
-
--- Function to run ANALYZE
-CREATE OR REPLACE FUNCTION run_analyze()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  ANALYZE;
-END;
-$$;
-
--- Function to run REINDEX
-CREATE OR REPLACE FUNCTION run_reindex()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- REINDEX can't be executed directly in a function
-  -- This is a placeholder. In reality, you would need to use pg_catalog.pg_stat_statements
-  -- or have a separate process that runs REINDEX
-  RAISE NOTICE 'REINDEX operation would be executed here';
-END;
-$$;
-
--- Function to get database statistics
-CREATE OR REPLACE FUNCTION get_database_stats()
-RETURNS json
+-- Function to vacuum and analyze tables
+CREATE OR REPLACE FUNCTION vacuum_analyze_tables()
+RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  result json;
+  table_name text;
+  result text := 'VACUUM ANALYZE completed for tables: ';
 BEGIN
-  SELECT json_build_object(
-    'table_stats', (
-      SELECT json_agg(json_build_object(
-        'table_name', relname,
-        'total_rows', n_live_tup,
-        'dead_rows', n_dead_tup,
-        'last_vacuum', last_vacuum,
-        'last_analyze', last_analyze
-      ))
-      FROM pg_stat_user_tables
-    ),
-    'index_stats', (
-      SELECT json_agg(json_build_object(
-        'index_name', indexrelname,
-        'table_name', relname,
-        'index_size', pg_size_pretty(pg_relation_size(indexrelid))
-      ))
-      FROM pg_stat_user_indexes
-    )
-  ) INTO result;
+  FOR table_name IN 
+    SELECT tablename FROM pg_tables 
+    WHERE schemaname = 'public'
+  LOOP
+    EXECUTE 'VACUUM ANALYZE ' || quote_ident(table_name);
+    result := result || table_name || ', ';
+  END LOOP;
+  
+  -- Remove trailing comma and space
+  result := substring(result, 1, length(result) - 2);
+  
+  RETURN result;
+END;
+$$;
+
+-- Function to analyze tables
+CREATE OR REPLACE FUNCTION analyze_tables()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  table_name text;
+  result text := 'ANALYZE completed for tables: ';
+BEGIN
+  FOR table_name IN 
+    SELECT tablename FROM pg_tables 
+    WHERE schemaname = 'public'
+  LOOP
+    EXECUTE 'ANALYZE ' || quote_ident(table_name);
+    result := result || table_name || ', ';
+  END LOOP;
+  
+  -- Remove trailing comma and space
+  result := substring(result, 1, length(result) - 2);
+  
+  RETURN result;
+END;
+$$;
+
+-- Function to reindex tables
+CREATE OR REPLACE FUNCTION reindex_tables()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  table_name text;
+  result text := 'REINDEX completed for tables: ';
+BEGIN
+  FOR table_name IN 
+    SELECT tablename FROM pg_tables 
+    WHERE schemaname = 'public'
+  LOOP
+    EXECUTE 'REINDEX TABLE ' || quote_ident(table_name);
+    result := result || table_name || ', ';
+  END LOOP;
+  
+  -- Remove trailing comma and space
+  result := substring(result, 1, length(result) - 2);
   
   RETURN result;
 END;
