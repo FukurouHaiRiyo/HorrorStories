@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -11,10 +11,8 @@ import { MainNav } from "@/components/main-nav"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
 import type { Story } from "@/types/supabase"
-import { Loader2 } from "lucide-react"
 
 export default function Home() {
-  // Update the useEffect to depend on isAuthReady instead of authLoading
   const { error: authError, isAuthReady } = useAuth()
 
   const [featuredStory, setFeaturedStory] = useState<Story | null>(null)
@@ -23,21 +21,21 @@ export default function Home() {
   const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching data
     if (!isAuthReady) {
-      console.log("Auth not ready yet, waiting to fetch featured story...")
+      console.log("Auth not ready yet...")
       return
     }
 
-    const loadFeaturedStory = async () => {
+    const fetchData = async () => {
       if (authError) {
-        console.error("Auth error, skipping featured story fetch:", authError)
+        console.error("Auth error:", authError)
         return
       }
 
       setIsLoading(true)
+
       try {
-        console.log(`Fetching featured story (attempt ${retryCount + 1})...`)
+        console.log(`Attempt ${retryCount + 1}: Fetching featured story...`)
         const { data, error: storiesError } = await fetchStories({
           featured: true,
           pageSize: 1,
@@ -46,64 +44,38 @@ export default function Home() {
         if (storiesError) throw storiesError
 
         if (!data || data.length === 0) {
-          // If no data and we haven't retried too many times, retry
+          console.log("No featured story found.")
           if (retryCount < 2) {
-            console.log("No featured story found, retrying...")
-            setRetryCount(retryCount + 1)
+            setRetryCount(prev => prev + 1)
             return
           }
         }
 
-        console.log("Featured story data:", data?.[0] || "No featured story found")
-        if (data && data[0]) {
-          // Ensure author is undefined or a fully-typed object (not null)
-          const story = {
-            ...data[0],
-            author: data[0].author
-              ? {
-                  id: data[0].author.id ?? "",
-                  username: data[0].author.username ?? null,
-                  full_name: data[0].author.full_name ?? null,
-                  avatar_url: data[0].author.avatar_url ?? null,
-                  bio: data[0].author.bio ?? null,
-                  role: data[0].author.role ?? "",
-                  created_at: data[0].author.created_at ?? "",
-                  updated_at: data[0].author.updated_at ?? "",
-                }
-              : undefined,
-          }
-          setFeaturedStory(story)
-        } else {
-          setFeaturedStory(null)
-        }
+        setFeaturedStory(data?.[0] || null)
         setLoadError(null)
       } catch (err: any) {
         console.error("Error fetching featured story:", err.message)
         setLoadError(err.message)
 
-        // Retry on error if we haven't retried too many times
         if (retryCount < 2) {
-          console.log("Error fetching featured story, retrying...")
-          setRetryCount(retryCount + 1)
+          setRetryCount(prev => prev + 1)
         }
       } finally {
         setIsLoading(false)
       }
     }
 
-    // Add a small delay to ensure auth state is fully processed
     const timer = setTimeout(() => {
-      loadFeaturedStory()
+      fetchData()
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [authError, isAuthReady, retryCount])
+  }, [isAuthReady, retryCount, authError])
 
   const handleRetry = () => {
-    setRetryCount(retryCount + 1)
+    setRetryCount(prev => prev + 1)
   }
 
-  // Fallback content for when we're loading or have errors
   const placeholderStory = {
     id: "placeholder",
     title: "The Whispers in the Walls",
@@ -117,6 +89,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-black text-white">
       <MainNav />
+
       <main className="flex-1">
         <section className="container px-4 py-12 md:px-6 md:py-24">
           {loadError && (
@@ -161,12 +134,10 @@ export default function Home() {
             </div>
           </section>
         ) : (
-          (featuredStory || (!isLoading && !authError)) && (
-            <section className="container px-4 py-12 md:px-6">
-              <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
-              <FeaturedStory story={featuredStory || placeholderStory} />
-            </section>
-          )
+          <section className="container px-4 py-12 md:px-6">
+            <h2 className="mb-8 text-3xl font-bold tracking-tighter">Featured Story</h2>
+            <FeaturedStory story={featuredStory || placeholderStory} />
+          </section>
         )}
 
         <section className="container px-4 py-12 md:px-6">
@@ -181,6 +152,7 @@ export default function Home() {
           </div>
         </section>
       </main>
+
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <p className="text-center text-sm text-gray-500 md:text-left">
