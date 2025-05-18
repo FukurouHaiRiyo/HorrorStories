@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
@@ -40,12 +40,10 @@ export function MainNav() {
               Categories
             </Link>
             <Link href="/about" className="text-sm font-medium text-white/90 transition-colors hover:text-white">
-              About.
+              About
             </Link>
           </nav>
-          <Suspense fallback={<div>Loading search bar...</div>}>
-            <SearchBar />
-          </Suspense>
+          <SearchBar />
         </div>
 
         {/* Desktop Auth Buttons */}
