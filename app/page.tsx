@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { FeaturedStory } from "@/components/featured-story"
 import { StoryList } from "@/components/story-list"
 import { MainNav } from "@/components/main-nav"
-import { EnvChecker } from "@/components/env-checker"
 import { useAuth } from "@/context/auth-context"
 import { fetchStories } from "@/lib/data-fetching"
 import type { Story } from "@/types/supabase"
@@ -75,7 +74,7 @@ export default function Home() {
     // Add a small delay to ensure auth state is fully processed
     const timer = setTimeout(() => {
       loadFeaturedStory()
-    }, 100)
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [authError, isAuthReady, retryCount])
@@ -100,9 +99,6 @@ export default function Home() {
       <MainNav />
       <main className="flex-1">
         <section className="container px-4 py-12 md:px-6 md:py-24">
-          {/* Show environment checker */}
-          <EnvChecker />
-
           {loadError && (
             <div className="mb-8 p-4 border border-red-800 bg-red-900/20 rounded-md">
               <h3 className="text-lg font-semibold text-red-500">Error loading content</h3>

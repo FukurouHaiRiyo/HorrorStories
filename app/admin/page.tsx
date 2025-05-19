@@ -8,7 +8,7 @@ import { PlusCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { getAllStoriesForAdmin } from "@/lib/server-actions" // Import the server action
+import { getAllStoriesForAdmin } from "@/lib/server-actions"
 import { useAuth } from "@/context/auth-context"
 import { MainNav } from "@/components/main-nav"
 import { AdminStoryCard } from "@/components/admin-story-card"
@@ -55,14 +55,14 @@ export default function AdminPage() {
 
         if (error) throw error
 
-        if (!data) {
+        if (!Array.isArray(data) || data.length === 0) {
           setStories([])
           return
         }
 
         // Count likes and comments
         const storiesWithCounts = await Promise.all(
-          data.map(async (story) => {
+          data.map(async (story: Story) => {
             // Get likes count
             const { count: likesCount, error: likesError } = await supabase
               .from("likes")
