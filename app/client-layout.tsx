@@ -19,7 +19,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       if (isLoading && !isAuthReady) {
         setLoadingTimeout(true)
       }
-    }, 4000) // Wait 2 seconds before showing loading indicator
+    }, 9000) // Wait 2 seconds before showing loading indicator
 
     return () => clearTimeout(timer)
   }, [isLoading, isAuthReady])
