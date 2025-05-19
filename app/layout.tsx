@@ -7,7 +7,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "NightmareNarrator - Horror Stories",
+  title: "Nightmare Fuel - Horror Stories",
   description: "A platform for sharing and reading terrifying horror stories",
     generator: 'v0.dev'
 }

@@ -7,8 +7,6 @@ import { AuthProvider, useAuth } from "@/context/auth-context"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { ErrorDisplay } from "@/components/error-display"
-// Import the AuthDebugIndicator at the top of the file
-import { AuthDebugIndicator } from "@/components/auth-debug-indicator"
 
 // Wrapper component to access auth context
 function AppContent({ children }: { children: React.ReactNode }) {
@@ -70,7 +68,7 @@ export default function ClientLayout({
       <AuthProvider>
         {mounted ? <AppContent>{children}</AppContent> : <div style={{ visibility: "hidden" }}>{children}</div>}
         <Toaster />
-        <AuthDebugIndicator />
+        {/* <AuthDebugIndicator /> */}
       </AuthProvider>
     </ThemeProvider>
   )
