@@ -311,7 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthReady(true)
       router.refresh()
       router.push("/")
-    }, 100) // adjust delay as needed
+    }, 10000) // adjust delay as needed
   } catch (err: any) {
     console.error("Error signing out:", err.message)
     setError(err.message)

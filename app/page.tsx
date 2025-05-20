@@ -111,7 +111,7 @@ export default function Home() {
 
           <div className="flex flex-col items-center gap-4 text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl/none">
-              Welcome to <span className="text-red-500">NightmareNarrator</span>
+              Welcome to <span className="text-red-500">Nightmare Fuel</span>
             </h1>
             <p className="max-w-[700px] text-gray-400 md:text-xl">
               Dive into a world of terror and suspense with original horror stories that will keep you up at night.
@@ -164,7 +164,7 @@ export default function Home() {
       <footer className="border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6">
           <p className="text-center text-sm text-gray-500 md:text-left">
-            © {new Date().getFullYear()} NightmareNarrator. All rights reserved.
+            © {new Date().getFullYear()} Nightmare Fuel. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-500 hover:text-white">

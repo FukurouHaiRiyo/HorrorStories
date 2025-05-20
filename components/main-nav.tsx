@@ -24,7 +24,7 @@ export function MainNav() {
     <header className="border-b border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-red-500">
-          <span>NightmareNarrator</span>
+          <span>Nightmare Fuel</span>
         </Link>
 
         {/* Desktop Navigation */}
