@@ -288,30 +288,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
-    if (!supabase) {
-      const error = new Error("Supabase client not initialized")
-      setError(error.message)
-      throw error
-    }
+  if (!supabase) {
+    const error = new Error("Supabase client not initialized")
+    setError(error.message)
+    throw error
+  }
 
-    try {
-      console.log("Signing out")
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+  try {
+    console.log("Signing out")
+    setIsAuthReady(false) // Prevents redirection issues by delaying until state resets
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
 
-      console.log("Signed out successfully")
-      setError(null)
-      setUser(null)
-      setProfile(null)
-      setSession(null)
+    console.log("Signed out successfully")
+    setError(null)
+    setUser(null)
+    setProfile(null)
+    setSession(null)
+
+    // Delay slightly to ensure state updates propagate
+    setTimeout(() => {
+      setIsAuthReady(true)
       router.refresh()
       router.push("/")
-    } catch (err: any) {
-      console.error("Error signing out:", err.message)
-      setError(err.message)
-      throw err
-    }
-  }, [supabase, router])
+    }, 100) // adjust delay as needed
+  } catch (err: any) {
+    console.error("Error signing out:", err.message)
+    setError(err.message)
+    setIsAuthReady(true) // Ensure UI doesn't get stuck
+    throw err
+  }
+}, [supabase, router])
 
   // Check if user is admin from profile or JWT
   const isAdmin = React.useMemo(() => {
